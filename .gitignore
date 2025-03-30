@@ -1,1 +1,4 @@
 .env
+art_museum.db
+database_manager.py
+datebase.py

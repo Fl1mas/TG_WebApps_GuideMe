@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GuideMe - Приветственное окно</title>
+    <title>GuideMe - Главная страница</title>
     <link rel="stylesheet" href="../static/styles/styles.css">
 </head>
 <body>
     <header class="header">
-        <img src="../static/images/header_image.jpg" alt="Заголовок" class="header-image">
+        <nav class="navbar">
+            <ul>
+                <li><a href="#">Главная</a></li>
+                <li><a href="#">О нас</a></li>
+                <li><a href="#">Контакты</a></li>
+            </ul>
+        </nav>
+        <img src="../static/images/header_image.jpg" alt="Заголовок" class="header-image"> <!-- Замените на ваше изображение -->
     </header>
-    
-    <div class="content">
+    <main class="main-content">
         <div class="button-container">
             <button class="nav-button">Навигатор</button>
             <button class="nav-button">FAQ</button>
@@ -19,6 +25,10 @@
             <button class="nav-button">Записаться на экскурсию</button>
             <button class="nav-button">Оставить отзыв</button>
         </div>
-    </div>
+    </main>
+
+    <footer class="footer">
+        <p>Все права защищены &copy; 2023 GuideMe</p>
+    </footer>
 </body>
 </html>
