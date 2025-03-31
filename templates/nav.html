@@ -36,27 +36,47 @@
         const captureButton = document.getElementById('capture');
         const hallName = document.getElementById('hall-name');
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => video.srcObject = stream)
-            .catch(error => console.error("Ошибка доступа к камере", error));
+        // Адрес сервера Flask
+        const SERVER_URL = "http://127.0.0.1:5000/scan_qr";  // ЗАМЕНИ, если сервер на хостинге
 
-        captureButton.addEventListener('click', () => {
+        // Запрашиваем доступ к камере
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(error => {
+                console.error("Ошибка доступа к камере", error);
+                alert("Не удалось получить доступ к камере. Проверьте настройки браузера.");
+            });
+
+        captureButton.addEventListener('click', async () => {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            canvas.toBlob(blob => {
+
+            // Преобразуем снимок в Blob и отправляем на сервер
+            canvas.toBlob(async (blob) => {
                 const formData = new FormData();
                 formData.append('image', blob, 'qr-code.jpg');
-                
-                fetch('/scan_qr', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => hallName.textContent = data.hall || "Не удалось распознать QR-код")
-                .catch(error => console.error("Ошибка при отправке изображения", error));
+
+                try {
+                    const response = await fetch(SERVER_URL, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Ошибка сервера: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    hallName.textContent = data.hall || "Не удалось распознать QR-код";
+                } catch (error) {
+                    console.error("Ошибка при отправке изображения", error);
+                    alert("Не удалось отправить изображение. Проверьте соединение.");
+                }
             }, 'image/jpeg');
         });
     </script>
