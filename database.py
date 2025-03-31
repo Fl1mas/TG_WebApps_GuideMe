@@ -188,7 +188,7 @@ class MuseumDatabase:
                         for row in rows:
                             writer.writerow([row[col] for col in columns])
                     logger.info(f"Экспортировано {len(rows)} записей из таблицы {table} в {file_path}")
-
+        
     def get_hall_info(self, hall_id: int) -> Optional[Dict]:
         """Получение информации о зале по ID."""
         with self._get_connection() as conn:
@@ -245,6 +245,14 @@ class MuseumDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM halls ORDER BY id")
             return [dict(row) for row in cursor.fetchall()]
+        
+    def get_hall_name_by_id(self, hall_id: int) -> Optional[str]:
+        """Получение имени зала по ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM halls WHERE id = ?", (hall_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None
 
     def get_all_exhibits(self) -> List[Dict]:
         """Получение всех экспонатов."""

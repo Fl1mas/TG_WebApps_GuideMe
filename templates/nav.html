@@ -8,77 +8,152 @@
 </head>
 <body>
     <header class="header">
-        <h1>Навигация по музею</h1>
+        <nav class="navbar">
+            <ul>
+                <li><a href="home">Главная</a></li>
+                <li><a href="about.html">О нас</a></li>
+                <li><a href="contacts.html">Контакты</a></li>
+            </ul>
+        </nav>
+
     </header>
 
     <main class="main-content">
         <section class="qr-section">
             <h2>Сканируйте QR-код</h2>
             <video id="camera" autoplay></video>
-            <button id="capture">Сделать снимок</button>
             <canvas id="canvas" style="display:none;"></canvas>
-            <p id="current-hall">Вы находитесь в: <span id="hall-name">—</span></p>
-        </section>
-
-        <section class="navigation-section">
-            <h2>Выберите зал</h2>
-            <select id="hall-select">
-                <option value="">Выберите зал...</option>
-            </select>
-            <button id="findRoute">Показать маршрут</button>
-            <p id="shortest-path"></p>
+            <p id="current-hall"><span id="hall-name">—</span></p>
+            <div id="hall-selection" style="display: none;">
+                <h3>Выберите зал, который хотите посетить:</h3>
+                <div id="halls-list">
+                    <!-- Здесь будут кнопки залов -->
+                </div> 
+            </div>   
+            <button id="restart-camera" onclick="reloadPage()">Сканировать QR-код снова</button>         
         </section>
     </main>
+    
+
+    <footer class="footer">
+        <p>Все права защищены &copy; 2025 GuideMe</p>
+    </footer>
 
     <script>
+        let currentHallId; // Переменная для сохранения текущего зала
+    
         const video = document.getElementById('camera');
         const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('capture');
         const hallName = document.getElementById('hall-name');
-
-        // Адрес сервера Flask
-        const SERVER_URL = "http://127.0.0.1:5000/scan_qr";  // ЗАМЕНИ, если сервер на хостинге
-
-        // Запрашиваем доступ к камере
-        navigator.mediaDevices.getUserMedia({ video: true })
+        let videoStream; // Переменная для хранения потока видео
+    
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 video.srcObject = stream;
+                videoStream = stream; // Сохраняем поток
                 video.play();
             })
             .catch(error => {
                 console.error("Ошибка доступа к камере", error);
-                alert("Не удалось получить доступ к камере. Проверьте настройки браузера.");
+                alert("Не удалось получить доступ к камере.");
             });
-
-        captureButton.addEventListener('click', async () => {
+    
+        function scanFrame() {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Преобразуем снимок в Blob и отправляем на сервер
-            canvas.toBlob(async (blob) => {
+            
+            canvas.toBlob(blob => {
                 const formData = new FormData();
                 formData.append('image', blob, 'qr-code.jpg');
-
-                try {
-                    const response = await fetch(SERVER_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Ошибка сервера: ${response.status}`);
+                
+                fetch('/scan_qr', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hall) {
+                        // Предположим, что data.hall имеет формат "Вы находитесь в зале 2 (Зал Ренессанса)"
+                        const hallIdMatch = data.hall.match(/(\d+)/); // Ищем первое число в строке
+                        const hallNameMatch = data.hall.match(/\((.*?)\)/); // Ищем название зала в скобках
+                
+                        if (hallIdMatch) {
+                            currentHallId = hallIdMatch[0]; // Сохраняем только ID зала
+                            const hallNameText = hallNameMatch ? hallNameMatch[1] : "Неизвестный зал"; // Сохраняем название зала
+                            hallName.textContent = `Вы находитесь в зале ${currentHallId} (${hallNameText})`; // Обновляем текст
+                            stopCamera(); // Отключаем камеру после успешного сканирования
+                            fetchHalls(); // Запрашиваем список залов после отключения камеры
+                        } else {
+                            hallName.textContent = "ID зала не найден";
+                        }
+                    } else {
+                        hallName.textContent = "QR-код не найден";
                     }
-
-                    const data = await response.json();
-                    hallName.textContent = data.hall || "Не удалось распознать QR-код";
-                } catch (error) {
-                    console.error("Ошибка при отправке изображения", error);
-                    alert("Не удалось отправить изображение. Проверьте соединение.");
-                }
+                })
+                .catch(error => console.error("Ошибка при отправке изображения", error));
             }, 'image/jpeg');
-        });
+        }
+    
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop()); // Останавливаем все треки
+                video.srcObject = null; // Отключаем видео
+            }
+        }
+    
+        function fetchHalls() {
+            fetch('/get_halls')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Сеть не отвечает');
+                    }
+                    return response.json();
+                })
+                .then(halls => {
+                    const hallsContainer = document.getElementById('halls-list');
+                    hallsContainer.innerHTML = ''; // Очищаем предыдущий список
+                    halls.forEach(hall => {
+                        const button = document.createElement('button');
+                        button.textContent = `${hall.id} "${hall.name}"`; // Предполагается, что hall имеет поля id и name
+                        button.classList.add('nav-button'); // Добавляем класс nav-button
+                        button.onclick = () => findRoute(hall.id); // Устанавливаем обработчик события
+                        hallsContainer.appendChild(button);
+                    });
+                    document.getElementById('hall-selection').style.display = 'block'; // Показываем список залов
+                })
+                .catch(error => console.error("Ошибка при получении залов", error));
+        }
+    
+        function findRoute(toHallId) {
+            fetch(`/find_route?from_hall_id=${currentHallId}&to_hall_id=${toHallId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка при получении маршрута');
+                    }
+                    return response.text();
+                })
+                .then(routeDescription => {
+                    // Находим элемент, куда будем вставлять описание маршрута
+                    const hallsContainer = document.getElementById('hall-selection');
+                    hallsContainer.innerHTML = ''; // Очищаем предыдущий контент
+        
+                    // Создаем новый элемент для описания маршрута
+                    const routeDescriptionElement = document.createElement('div');
+                    routeDescriptionElement.innerHTML = `<h3>Описание маршрута:</h3><p>${routeDescription}</p>`;
+                    
+                    // Вставляем описание маршрута в нужное место
+                    const mainContent = document.querySelector('.main-content');
+                    mainContent.appendChild(routeDescriptionElement);
+                })
+                .catch(error => console.error("Ошибка при поиске маршрута", error));
+        }
+        function reloadPage() {
+            location.reload();
+        }
+    
+        setInterval(scanFrame, 3000); // Сканировать каждые 3 секунды
     </script>
 </body>
 </html>
