@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Часто задаваемые вопросы - Музей</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Подключите свой CSS файл, если нужно -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .faq-item {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+        .faq-question {
+            font-weight: bold;
+            cursor: pointer;
+            color: #007BFF;
+        }
+        .faq-answer {
+            display: none;
+            margin-top: 5px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Часто задаваемые вопросы</h1>
+    <div class="faq-container">
+        <div class="faq-item">
+            <div class="faq-question">Каковы часы работы музея?</div>
+            <div class="faq-answer">Музей открыт с понедельника по воскресенье с 10:00 до 18:00.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Как купить билеты?</div>
+            <div class="faq-answer">Билеты можно приобрести на нашем сайте или в кассе музея.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Есть ли скидки для студентов и пенсионеров?</div>
+            <div class="faq-answer">Да, студенты и пенсионеры могут получить скидку 50% на входной билет.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Можно ли проводить экскурсии на нескольких языках?</div>
+            <div class="faq-answer">Да, мы предлагаем экскурсии на русском, английском и других языках по предварительной записи.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Как оставить отзыв о посещении музея?</div>
+            <div class="faq-answer">Вы можете оставить отзыв на нашем сайте или в социальных сетях.</div>
+        </div>
+    </div>
+
+    <script>
+        const questions = document.querySelectorAll('.faq-question');
+        questions.forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+    </script>
+
+</body>
+</html>
